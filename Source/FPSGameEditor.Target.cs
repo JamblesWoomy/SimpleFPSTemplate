@@ -11,6 +11,6 @@ public class FPSGameEditorTarget : TargetRules
 		ExtraModuleNames.Add("FPSGame");
 
 		DefaultBuildSettings = BuildSettingsVersion.Latest;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
 	}
 }
