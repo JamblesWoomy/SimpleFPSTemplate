@@ -130,7 +130,7 @@ void AMyPlayerController::FindSession() {
 			searchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 			searchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("AIEI_UNREAL_GAME"), EOnlineComparisonOp::Equals);
 
-			sessionInterface->AddOnEndSessionCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnFindSessionCompleteDelegate));
+			sessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnFindSessionCompleteDelegate));
 			TSharedRef<FOnlineSessionSearch> searchSettingsRef = searchSettings.ToSharedRef();
 			TSharedPtr<const FUniqueNetId> uniqueNetId = GetLocalPlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
 
@@ -142,6 +142,79 @@ void AMyPlayerController::FindSession() {
 			else {
 				DISPLAY_LOG("FAILED TO FIND SESSION");
 			}
+		}
+	}
+}
+
+void AMyPlayerController::OnFindSessionCompleteDelegate(bool bWasSuccessful)
+{
+	if (bWasSuccessful) {
+		if (searchSettings->SearchResults.Num() == 0)
+			DISPLAY_LOG("NO SESSION IDs FOUND !! ");
+
+		DISPLAY_LOG("FOUND SESSION ID : %s", *searchSettings->SearchResults[0].GetSessionIdStr());
+		DISPLAY_LOG("HOST NAME : %s", *searchSettings->SearchResults[0].Session.OwningUserName);
+
+		JoinSession();
+	}
+	else {
+		DISPLAY_LOG("FAILED TO FIND SESSION ");
+	}
+}
+
+void AMyPlayerController::JoinSession()
+{
+	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
+
+	if (subSystem) {
+		IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
+		if (sessionInterface.IsValid()) {
+			if (searchSettings->SearchResults[0].IsValid())
+			sessionInterface->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnJoinSessionCompleteDelegate));
+
+			TSharedPtr<const FUniqueNetId> uniqueNetId = GetLocalPlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
+
+			searchSettings->SearchResults[0].Session.SessionSettings.bUsesPresence = true;
+			searchSettings->SearchResults[0].Session.SessionSettings.bUseLobbiesIfAvailable = true;
+
+			sessionInterface->JoinSession(*uniqueNetId, SESSION_NAME, searchSettings->SearchResults[0]);
+
+			DISPLAY_LOG("JOINING SESSION !! ");
+
+		} else {
+			DISPLAY_LOG(" INVALID SESSION ");
+		}
+	}
+}
+
+void AMyPlayerController::OnJoinSessionCompleteDelegate(FName sessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
+
+	if (subSystem) {
+		IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
+		if (sessionInterface.IsValid()) {
+			if (Result == EOnJoinSessionCompleteResult::Success) {
+				FString connectionInfo;
+				if (sessionInterface->GetResolvedConnectString(SESSION_NAME, connectionInfo)) {
+					UE_LOG_ONLINE_SESSION(Log, TEXT("JOINED SESSION: TRAVELLING TO %s"), *connectionInfo);
+					//Client to server
+					AMyPlayerController::ClientTravel(connectionInfo, TRAVEL_Absolute);
+				}
+			}
+		}
+	}
+}
+
+void AMyPlayerController::QuitSession()
+{
+	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
+
+	if (subSystem) {
+		IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
+		if (sessionInterface.IsValid()) {
+			sessionInterface->DestroySession(SESSION_NAME);
+			UGameplayStatics::OpenLevel(this, FName(TEXT("/Game/ThirdPerson/Maps/ThirsPersonMap")), true, "");
 		}
 	}
 }
