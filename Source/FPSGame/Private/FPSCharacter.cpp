@@ -9,6 +9,7 @@
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "Animation/AnimSequence.h"
 
@@ -32,6 +33,8 @@ AFPSCharacter::AFPSCharacter()
 	GunMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
 	GunMeshComponent->CastShadow = false;
 	GunMeshComponent->SetupAttachment(Mesh1PComponent, "GripPoint");
+
+	CurrentHealth = 100;
 }
 
 
@@ -87,8 +90,10 @@ void AFPSCharacter::OnJumped_Implementation()
 
 void AFPSCharacter::Fire()
 {
+	Server_Fire();
+
 	// try and fire a projectile
-	if (ProjectileClass)
+	/*if (ProjectileClass)
 	{
 		// Grabs location from the mesh that must have a socket called "Muzzle" in his skeleton
 		FVector MuzzleLocation = GunMeshComponent->GetSocketLocation("Muzzle");
@@ -102,7 +107,7 @@ void AFPSCharacter::Fire()
 
 		// spawn the projectile at the muzzle
 		GetWorld()->SpawnActor<AFPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, ActorSpawnParams);
-	}
+	}*/
 
 	UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
 	
@@ -115,6 +120,31 @@ void AFPSCharacter::Fire()
 
 	// Play Muzzle FX
 	UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, GunMeshComponent, "Muzzle");
+}
+
+
+void AFPSCharacter::Server_Fire_Implementation()
+{
+	if (ProjectileClass) {
+		FVector MuzzleLocation = GunMeshComponent->GetSocketLocation("Muzzle");
+		FRotator MuzzleRotation = GetControlRotation();
+
+		FActorSpawnParameters ActorSpawnParams;
+		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+		ActorSpawnParams.Instigator = this;
+
+		GetWorld()->SpawnActor<AFPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, ActorSpawnParams);
+	}
+}
+
+bool AFPSCharacter::Server_Fire_Validate()
+{
+	return true;
+}
+
+void AFPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFPSCharacter, CurrentHealth);
 }
 
 void AFPSCharacter::MoveInput(const FInputActionValue& InputValue)

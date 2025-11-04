@@ -85,10 +85,18 @@ public:
 
 	virtual void OnJumped_Implementation() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	float CurrentHealth;
+
 protected:
 	
 	/** Fires a projectile. */
 	void Fire();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_Fire();
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 	void MoveInput(const FInputActionValue& InputValue);
 

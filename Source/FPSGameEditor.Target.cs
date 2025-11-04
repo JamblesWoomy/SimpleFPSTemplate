@@ -10,7 +10,7 @@ public class FPSGameEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		ExtraModuleNames.Add("FPSGame");
 
-		DefaultBuildSettings = BuildSettingsVersion.Latest;
+		DefaultBuildSettings = BuildSettingsVersion.V5;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
 	}
 }

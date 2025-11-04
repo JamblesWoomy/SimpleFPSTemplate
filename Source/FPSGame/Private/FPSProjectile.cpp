@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "FPSCharacter.h"
 
 AFPSProjectile::AFPSProjectile() 
 {
@@ -28,6 +29,10 @@ AFPSProjectile::AFPSProjectile()
 	ProjectileMovement->MaxSpeed = 3000.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = true;
+
+	if (HasAuthority()) {
+		bReplicates = true;
+	}
 }
 
 
@@ -78,5 +83,16 @@ void AFPSProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPr
 		}
 
 		Explode();
+	}
+
+	if ((OtherActor) && (OtherActor != this) && (OtherComp))
+	{
+		AFPSCharacter* mCharacter = Cast<AFPSCharacter>(OtherActor);
+
+		if (mCharacter) {
+			if (GetLocalRole() == ROLE_Authority) {
+				mCharacter->CurrentHealth -= 10; // damage taken on server
+			}
+		}
 	}
 }
