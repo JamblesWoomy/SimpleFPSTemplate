@@ -93,6 +93,7 @@ void AFPSProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPr
 			if (GetLocalRole() == ROLE_Authority) {
 				mCharacter->CurrentHealth -= 10; // damage taken on server
 			}
+			Explode();
 		}
 	}
 }

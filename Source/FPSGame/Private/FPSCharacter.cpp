@@ -145,6 +145,7 @@ bool AFPSCharacter::Server_Fire_Validate()
 void AFPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AFPSCharacter, CurrentHealth);
+	DOREPLIFETIME(AFPSCharacter, bIsCarryingObjective);
 }
 
 void AFPSCharacter::MoveInput(const FInputActionValue& InputValue)
