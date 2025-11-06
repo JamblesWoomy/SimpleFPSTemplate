@@ -114,13 +114,13 @@ bool AMyPlayerController::HostSession() {
 
 void AMyPlayerController::OnCreateSessionCompleteDelegate(FName InSessionName, bool bWasSuccessful) {
 	if (bWasSuccessful) {
-		UGameplayStatics::OpenLevel(this, FName(TEXT("/Game/ThirdPerson/Maps/ThirdPersonMap")), true, "listen");
+		DISPLAY_LOG("Completed Delegate ");
+		UGameplayStatics::OpenLevel(this, FName(TEXT("/Game/Maps/FirstPersonExampleMap")), true, "listen");
 	}
 }
 
 void AMyPlayerController::FindSession() {
 	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
-
 	if (subSystem) {
 		IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
 		if (sessionInterface.IsValid()) {
@@ -143,6 +143,10 @@ void AMyPlayerController::FindSession() {
 				DISPLAY_LOG("FAILED TO FIND SESSION");
 			}
 		}
+		else {
+			DISPLAY_LOG("FAIL ");
+		}
+
 	}
 }
 
@@ -214,7 +218,7 @@ void AMyPlayerController::QuitSession()
 		IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
 		if (sessionInterface.IsValid()) {
 			sessionInterface->DestroySession(SESSION_NAME);
-			UGameplayStatics::OpenLevel(this, FName(TEXT("/Game/ThirdPerson/Maps/ThirsPersonMap")), true, "");
+			UGameplayStatics::OpenLevel(this, FName(TEXT("/Game/Maps/FirstPersonExampleMap")), true, "");
 		}
 	}
 }
