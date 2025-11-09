@@ -8,6 +8,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 
+// Object incorporating lag compensation
 // Sets default values
 AObjective::AObjective()
 {
@@ -50,12 +51,13 @@ void AObjective::Tick(float DeltaTime)
 	}
 }
 
+// Restore player health on overlap
 void AObjective::NotifyActorBeginOverlap(AActor* OtherActor) {
 	Super::NotifyActorBeginOverlap(OtherActor);
 	if (GetLocalRole() == ROLE_Authority) {
 		AFPSCharacter* mCharacter = Cast<AFPSCharacter>(OtherActor);
 		if (mCharacter) {
-			//mCharacter->bIsCarryingObjective = true;
+			mCharacter->CurrentHealth = 100;
 			Destroy();
 		}
 	}

@@ -87,11 +87,15 @@ void AFPSProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPr
 
 	if ((OtherActor) && (OtherActor != this) && (OtherComp))
 	{
+		//Damage player on contact
 		AFPSCharacter* mCharacter = Cast<AFPSCharacter>(OtherActor);
-
 		if (mCharacter) {
 			if (GetLocalRole() == ROLE_Authority) {
 				mCharacter->CurrentHealth -= 10; // damage taken on server
+				if (mCharacter->CurrentHealth <= 0) {
+					mCharacter->CurrentHealth = 100;
+					mCharacter->Deaths += 1;
+				}
 			}
 			Explode();
 		}

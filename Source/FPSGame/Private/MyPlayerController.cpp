@@ -20,7 +20,7 @@
 //SEARCH_KEYWORDS, _PRESENCE, _LOBBIES, TEC.
 #include "Online/OnlineSessionNames.h"
 
-const FName SESSION_NAME = "AIEI_Session";
+const FName SESSION_NAME = "FPSGame_Session";
 TSharedPtr<class FOnlineSessionSearch > searchSettings;
 
 //Custom debug logging
@@ -94,7 +94,7 @@ bool AMyPlayerController::HostSession() {
 			sessionSettings->bUseLobbiesIfAvailable = true;// Use lobby if available in subsystem
 
 			// Via Online service and Lan !!
-			sessionSettings->Set(SEARCH_KEYWORDS, FString("AIEI_UNREAL_GAME"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+			sessionSettings->Set(SEARCH_KEYWORDS, FString("UnrealFPSDemo"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
 			sessionInterface->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnCreateSessionCompleteDelegate));
 			TSharedPtr<const FUniqueNetId> uniqueNetId = GetLocalPlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
@@ -128,7 +128,7 @@ void AMyPlayerController::FindSession() {
 
 			searchSettings->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 			searchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
-			searchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("AIEI_UNREAL_GAME"), EOnlineComparisonOp::Equals);
+			searchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("UnrealFPSDemo"), EOnlineComparisonOp::Equals);
 
 			sessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnFindSessionCompleteDelegate));
 			TSharedRef<FOnlineSessionSearch> searchSettingsRef = searchSettings.ToSharedRef();
@@ -169,9 +169,10 @@ void AMyPlayerController::OnFindSessionCompleteDelegate(bool bWasSuccessful)
 void AMyPlayerController::JoinSession()
 {
 	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
-
+	DISPLAY_LOG("FOUND SUBSYSTEM");
 	if (subSystem) {
 		IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
+		DISPLAY_LOG("FOUND INTERFACE");
 		if (sessionInterface.IsValid()) {
 			if (searchSettings->SearchResults[0].IsValid())
 			sessionInterface->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnJoinSessionCompleteDelegate));
