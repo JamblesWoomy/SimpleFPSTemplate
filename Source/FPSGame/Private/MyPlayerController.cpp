@@ -75,6 +75,7 @@ void AMyPlayerController::OnLoginCompleteDelegate(int32 localUserNum, bool bWasS
 	}
 }
 
+// Creation of dedicated server
 bool AMyPlayerController::HostSession() {
 	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
 
@@ -119,6 +120,7 @@ void AMyPlayerController::OnCreateSessionCompleteDelegate(FName InSessionName, b
 	}
 }
 
+// Searching for server, client-side communication
 void AMyPlayerController::FindSession() {
 	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
 	if (subSystem) {
