@@ -23,19 +23,20 @@ public:
 	void OnLoginCompleteDelegate(int32 localUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 	
 	UFUNCTION(BlueprintCallable, Category = "OnlineSession")
-	bool HostSession();
+	bool HostSession(); // creation of host and server
 	void OnCreateSessionCompleteDelegate(FName InSessionName, bool bWasSuccessful);
 	
 	UFUNCTION(BlueprintCallable, Category = "OnlineSession")
-	void FindSession();
+	void FindSession(); // locate session
 	void OnFindSessionCompleteDelegate(bool bWasSuccessful);
 	
 	UFUNCTION(BlueprintCallable, Category = "OnlineSession")
-	void JoinSession();
+	void JoinSession(); // connect player to client
 	void OnJoinSessionCompleteDelegate(FName sessionName, EOnJoinSessionCompleteResult::Type Result);
 	
 	//Quit
 	UFUNCTION(BlueprintCallable, Category = "OnlineSession")
 	void QuitSession();
 
+	bool bIsInServer = false;
 };

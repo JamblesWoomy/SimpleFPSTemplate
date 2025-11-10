@@ -78,38 +78,41 @@ void AMyPlayerController::OnLoginCompleteDelegate(int32 localUserNum, bool bWasS
 // Creation of dedicated server
 bool AMyPlayerController::HostSession() {
 	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
+	if (bIsInServer)
+	{
+		DISPLAY_LOG("ALREADY IN SERVER");
+	} else {
+		if (subSystem) {
+			IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
 
-	if (subSystem) {
-		IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
+			if (sessionInterface.IsValid()) {
+				TSharedPtr<class FOnlineSessionSettings> sessionSettings = MakeShareable(new FOnlineSessionSettings());
+				sessionSettings->NumPublicConnections = 4; // 4 Online Connection
+				sessionSettings->NumPrivateConnections = 4; // 4 LAN Connection
+				sessionSettings->bShouldAdvertise = true; // should broadcast
+				sessionSettings->bAllowJoinInProgress = true; // allow join after session begins
+				sessionSettings->bAllowInvites = true; // allow invite receival
 
-		if (sessionInterface.IsValid()) {
-			TSharedPtr<class FOnlineSessionSettings> sessionSettings = MakeShareable(new FOnlineSessionSettings());
-			sessionSettings->NumPublicConnections = 4; // 4 Online Connection
-			sessionSettings->NumPrivateConnections = 4; // 4 LAN Connection
-			sessionSettings->bShouldAdvertise = true; // should broadcast
-			sessionSettings->bAllowJoinInProgress = true; // allow join after session begins
-			sessionSettings->bAllowInvites = true; // allow invite receival
+				sessionSettings->bUsesPresence = true; // use friendlist
+				sessionSettings->bAllowJoinViaPresence = true;// join via friendlist
+				sessionSettings->bUseLobbiesIfAvailable = true;// Use lobby if available in subsystem
 
-			sessionSettings->bUsesPresence = true; // use friendlist
-			sessionSettings->bAllowJoinViaPresence = true;// join via friendlist
-			sessionSettings->bUseLobbiesIfAvailable = true;// Use lobby if available in subsystem
+				// Via Online service and Lan !!
+				sessionSettings->Set(SEARCH_KEYWORDS, FString("UnrealFPSDemo"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
-			// Via Online service and Lan !!
-			sessionSettings->Set(SEARCH_KEYWORDS, FString("UnrealFPSDemo"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+				sessionInterface->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnCreateSessionCompleteDelegate));
+				TSharedPtr<const FUniqueNetId> uniqueNetId = GetLocalPlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
+				bool res = sessionInterface->CreateSession(*uniqueNetId, SESSION_NAME, *sessionSettings);
 
-			sessionInterface->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnCreateSessionCompleteDelegate));
-			TSharedPtr<const FUniqueNetId> uniqueNetId = GetLocalPlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
-			bool res = sessionInterface->CreateSession(*uniqueNetId, SESSION_NAME, *sessionSettings);
-
-			if (res) {
-				DISPLAY_LOG("CREATED SESSION");
-			}
-			else {
-				DISPLAY_LOG("FAILED TO CREATE SESSION");
+				if (res) {
+					DISPLAY_LOG("CREATED SESSION");
+				}
+				else {
+					DISPLAY_LOG("FAILED TO CREATE SESSION");
+				}
 			}
 		}
 	}
-
 	return false;
 }
 
@@ -122,53 +125,58 @@ void AMyPlayerController::OnCreateSessionCompleteDelegate(FName InSessionName, b
 
 // Searching for server, client-side communication
 void AMyPlayerController::FindSession() {
-	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
-	if (subSystem) {
-		IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
-		if (sessionInterface.IsValid()) {
-			searchSettings = MakeShareable(new FOnlineSessionSearch());
+	if (bIsInServer == false)
+	{
+		IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
+		if (subSystem) {
+			IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
+			if (sessionInterface.IsValid()) {
+				searchSettings = MakeShareable(new FOnlineSessionSearch());
 
-			searchSettings->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
-			searchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
-			searchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("UnrealFPSDemo"), EOnlineComparisonOp::Equals);
+				searchSettings->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+				searchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+				searchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("UnrealFPSDemo"), EOnlineComparisonOp::Equals);
 
-			sessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnFindSessionCompleteDelegate));
-			TSharedRef<FOnlineSessionSearch> searchSettingsRef = searchSettings.ToSharedRef();
-			TSharedPtr<const FUniqueNetId> uniqueNetId = GetLocalPlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
+				sessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &AMyPlayerController::OnFindSessionCompleteDelegate));
+				TSharedRef<FOnlineSessionSearch> searchSettingsRef = searchSettings.ToSharedRef();
+				TSharedPtr<const FUniqueNetId> uniqueNetId = GetLocalPlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
 
-			bool res = sessionInterface->FindSessions(*uniqueNetId, searchSettingsRef);
+				bool res = sessionInterface->FindSessions(*uniqueNetId, searchSettingsRef);// error handling mechanism
 
-			if (res) {
-				DISPLAY_LOG("FOUND SESSION ");
+				if (res) {
+					DISPLAY_LOG("FOUND SESSION ");
+				}
+				else {
+					DISPLAY_LOG("FAILED TO FIND SESSION");
+				}
 			}
 			else {
-				DISPLAY_LOG("FAILED TO FIND SESSION");
+				DISPLAY_LOG("FAIL ");
 			}
-		}
-		else {
-			DISPLAY_LOG("FAIL ");
-		}
 
+		}
 	}
 }
 
 void AMyPlayerController::OnFindSessionCompleteDelegate(bool bWasSuccessful)
 {
 	if (bWasSuccessful) {
-		if (searchSettings->SearchResults.Num() == 0)
-			DISPLAY_LOG("NO SESSION IDs FOUND !! ");
+		if (searchSettings->SearchResults.Num() == 0) {
+			DISPLAY_LOG("NO SESSION IDs FOUND !! ");// exception handling
+		}
+		else {
+			DISPLAY_LOG("FOUND SESSION ID : %s", *searchSettings->SearchResults[0].GetSessionIdStr());
+			DISPLAY_LOG("HOST NAME : %s", *searchSettings->SearchResults[0].Session.OwningUserName);
 
-		DISPLAY_LOG("FOUND SESSION ID : %s", *searchSettings->SearchResults[0].GetSessionIdStr());
-		DISPLAY_LOG("HOST NAME : %s", *searchSettings->SearchResults[0].Session.OwningUserName);
-
-		JoinSession();
+			JoinSession();
+		}
 	}
 	else {
 		DISPLAY_LOG("FAILED TO FIND SESSION ");
 	}
 }
 
-void AMyPlayerController::JoinSession()
+void AMyPlayerController::JoinSession()// Connect user to other client
 {
 	IOnlineSubsystem* subSystem = Online::GetSubsystem(GetWorld());
 	DISPLAY_LOG("FOUND SUBSYSTEM");
@@ -185,7 +193,7 @@ void AMyPlayerController::JoinSession()
 			searchSettings->SearchResults[0].Session.SessionSettings.bUseLobbiesIfAvailable = true;
 
 			sessionInterface->JoinSession(*uniqueNetId, SESSION_NAME, searchSettings->SearchResults[0]);
-
+			bIsInServer = true;
 			DISPLAY_LOG("JOINING SESSION !! ");
 
 		} else {
@@ -221,6 +229,7 @@ void AMyPlayerController::QuitSession()
 		IOnlineSessionPtr sessionInterface = subSystem->GetSessionInterface();
 		if (sessionInterface.IsValid()) {
 			sessionInterface->DestroySession(SESSION_NAME);
+			bIsInServer = false;
 			UGameplayStatics::OpenLevel(this, FName(TEXT("/Game/Maps/FirstPersonExampleMap")), true, "");
 		}
 	}
